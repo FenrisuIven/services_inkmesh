@@ -1,0 +1,12 @@
+import { BaseRepository } from './base.repository';
+import { projectTable } from '../schema/project.table';
+import { Inject, Injectable } from '@nestjs/common';
+import { DRIZZLE_CLIENT } from '../drizzle/drizzle.provider';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+
+@Injectable()
+export class ProjectsRepository extends BaseRepository<typeof projectTable> {
+  constructor(@Inject(DRIZZLE_CLIENT) db: NodePgDatabase) {
+    super(db, projectTable);
+  }
+}
