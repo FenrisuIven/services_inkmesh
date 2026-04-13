@@ -8,6 +8,13 @@
       "when": 1776010812021,
       "tag": "0000_init_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776096881879,
+      "tag": "0001_project_role",
+      "breakpoints": true
     }
   ]
 }

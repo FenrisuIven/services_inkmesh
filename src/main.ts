@@ -3,6 +3,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { DocumentsModule } from './services/documents/documents.module';
 import { ProjectsModule } from './services/projects/projects.module';
 import { DraftsModule } from './services/drafts/drafts.module';
+import { UsersModule } from './services/users/users.module';
 import { SERVICE_PORTS } from './config/ports';
 
 async function bootstrapService(
@@ -35,6 +36,7 @@ async function bootstrap() {
     bootstrapService(DocumentsModule, SERVICE_PORTS.DOCUMENTS, 'Documents'),
     bootstrapService(ProjectsModule, SERVICE_PORTS.PROJECTS, 'Projects'),
     bootstrapService(DraftsModule, SERVICE_PORTS.DRAFTS, 'Drafts'),
+    bootstrapService(UsersModule, SERVICE_PORTS.USERS, 'Users'),
   ]);
 
   console.log('All microservices initialized.');
