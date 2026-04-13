@@ -1,19 +1,43 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { AppModule } from './app.module';
+import { DocumentsModule } from './services/documents/documents.module';
+import { ProjectsModule } from './services/projects/projects.module';
+import { DraftsModule } from './services/drafts/drafts.module';
+import { SERVICE_PORTS } from './config/ports';
+
+async function bootstrapService(
+  module: any,
+  port: number,
+  serviceName: string,
+) {
+  try {
+    const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+      module,
+      {
+        transport: Transport.TCP,
+        options: {
+          host: '0.0.0.0',
+          port: port,
+        },
+      },
+    );
+    await app.listen();
+    console.log(`[${serviceName} Service] listening on TCP port ${port}`);
+  } catch (error) {
+    console.error(`Failed to start ${serviceName} service:`, error);
+  }
+}
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
-    {
-      transport: Transport.TCP,
-      options: {
-        host: '0.0.0.0',
-        port: 4002,
-      },
-    },
-  );
-  await app.listen();
-  console.log('Services monolith is listening on TCP port 4002');
+  console.log('Starting Inkmesh Microservices monolith...');
+
+  await Promise.all([
+    bootstrapService(DocumentsModule, SERVICE_PORTS.DOCUMENTS, 'Documents'),
+    bootstrapService(ProjectsModule, SERVICE_PORTS.PROJECTS, 'Projects'),
+    bootstrapService(DraftsModule, SERVICE_PORTS.DRAFTS, 'Drafts'),
+  ]);
+
+  console.log('All microservices initialized.');
 }
+
 bootstrap();
