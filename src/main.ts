@@ -5,6 +5,7 @@ import { ProjectsModule } from './services/projects/projects.module';
 import { DraftsModule } from './services/drafts/drafts.module';
 import { UsersModule } from './services/users/users.module';
 import { SERVICE_PORTS } from './config/ports';
+import { AllExceptionsRpcFilter } from './filters/rpc.exception.filter';
 
 async function bootstrapService(
   module: any,
@@ -22,6 +23,7 @@ async function bootstrapService(
         },
       },
     );
+    app.useGlobalFilters(new AllExceptionsRpcFilter());
     await app.listen();
     console.log(`[${serviceName} Service] listening on TCP port ${port}`);
   } catch (error) {

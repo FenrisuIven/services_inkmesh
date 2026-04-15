@@ -20,7 +20,30 @@ export class UsersRepository extends BaseRepository<typeof memberTable> {
     return results[0];
   }
 
-  async assignRole(projectId: string, memberId: string, role: any) {
+  async isProjectMember(auth0Id: string, projectId: string): Promise<boolean> {
+    const result = await this.db
+      .select({ id: memberTable.id })
+      .from(memberTable)
+      .innerJoin(
+        projectToMemberTable,
+        eq(memberTable.id, projectToMemberTable.memberId),
+      )
+      .where(
+        and(
+          eq(memberTable.auth0_id, auth0Id),
+          eq(projectToMemberTable.projectId, projectId),
+        ),
+      )
+      .limit(1);
+
+    return result.length > 0;
+  }
+
+  async assignRole(
+    projectId: string,
+    memberId: string,
+    role: 'OWNER' | 'MODERATOR' | 'WRITER',
+  ) {
     return this.db
       .insert(projectToMemberTable)
       .values({
