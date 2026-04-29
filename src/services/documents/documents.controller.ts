@@ -1,10 +1,26 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { DocumentsRepository } from '../../db/repositories/documents.repository';
+import { DocumentsSessionService } from './documents-session.service';
+import { DOCUMENT_MESSAGES, SyncPayload } from '@inkmesh/contracts';
 
 @Controller()
 export class DocumentsController {
-  constructor(private readonly repository: DocumentsRepository) {}
+  constructor(
+    private readonly repository: DocumentsRepository,
+    private readonly sessionService: DocumentsSessionService,
+  ) {}
+
+  @MessagePattern({ cmd: DOCUMENT_MESSAGES.INIT_SESSION })
+  async initSession(@Payload() data: { docId: string }) {
+    return await this.sessionService.initSession(data.docId);
+  }
+
+  @MessagePattern({ cmd: DOCUMENT_MESSAGES.SYNC })
+  async syncDocument(@Payload() data: SyncPayload & { docId: string }) {
+    const { docId, ...payload } = data;
+    return await this.sessionService.syncDocument(docId, payload);
+  }
 
   @MessagePattern({ cmd: 'get-documents' })
   async getDocuments() {
