@@ -1,0 +1,24 @@
+{
+  "id": "de321e73-df6c-4ab5-9493-0b369b20b6af",
+  "prevId": "f99de443-eee5-4d55-a5a1-3c141c087bde",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {},
+  "enums": {},
+  "schemas": {
+    "characters": "characters",
+    "chats": "chats",
+    "junctions": "junctions",
+    "projects": "projects",
+    "users": "users"
+  },
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

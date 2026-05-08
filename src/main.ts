@@ -4,6 +4,7 @@ import { DocumentsModule } from './services/documents/documents.module';
 import { ProjectsModule } from './services/projects/projects.module';
 import { DraftsModule } from './services/drafts/drafts.module';
 import { UsersModule } from './services/users/users.module';
+import { CharactersModule } from './services/characters/characters.module';
 import { SERVICE_PORTS } from './config/ports';
 import { AllExceptionsRpcFilter } from './filters/rpc.exception.filter';
 
@@ -39,6 +40,7 @@ async function bootstrap() {
     bootstrapService(ProjectsModule, SERVICE_PORTS.PROJECTS, 'Projects'),
     bootstrapService(DraftsModule, SERVICE_PORTS.DRAFTS, 'Drafts'),
     bootstrapService(UsersModule, SERVICE_PORTS.USERS, 'Users'),
+    bootstrapService(CharactersModule, SERVICE_PORTS.CHARACTERS, 'Characters'),
   ]);
 
   console.log('All microservices initialized.');

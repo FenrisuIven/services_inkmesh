@@ -15,6 +15,20 @@
       "when": 1776096881879,
       "tag": "0001_project_role",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777495556246,
+      "tag": "0002_careful_roland_deschain",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777495800346,
+      "tag": "0003_round_mentor",
+      "breakpoints": true
     }
   ]
 }

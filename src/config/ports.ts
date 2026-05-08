@@ -3,4 +3,5 @@ export const SERVICE_PORTS = {
   PROJECTS: 4003,
   DRAFTS: 4004,
   USERS: 4005,
+  CHARACTERS: 4006,
 };
