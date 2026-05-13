@@ -31,6 +31,11 @@ export class UsersController {
     return this.usersService.findByAuth0Id(auth0Id);
   }
 
+  @MessagePattern({ cmd: 'get-all-users' })
+  async getAllUsers() {
+    return this.usersService.findAllUsers();
+  }
+
   @MessagePattern({ cmd: 'get-members' })
   async getMembers() {
     return this.usersService.findAll();

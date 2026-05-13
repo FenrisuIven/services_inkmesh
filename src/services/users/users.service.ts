@@ -58,6 +58,10 @@ export class UsersService {
     return this.usersRepository.getProjectMembers(projectId);
   }
 
+  async findAllUsers() {
+    return this.usersRepository.findAllUsers();
+  }
+
   async findAll() {
     return this.usersRepository.findAll();
   }

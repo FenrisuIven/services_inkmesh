@@ -78,4 +78,14 @@ export class ProjectsController {
 
     return await this.repository.delete(id);
   }
+
+  @MessagePattern({ cmd: 'add-project-member' })
+  async addProjectMember(@Payload() payload: { projectId: string; memberId: string; role: 'OWNER' | 'MODERATOR' | 'WRITER' }) {
+    return this.usersRepository.assignRole(payload.projectId, payload.memberId, payload.role);
+  }
+
+  @MessagePattern({ cmd: 'get-project-members' })
+  async getProjectMembers(@Payload() projectId: string) {
+    return this.usersRepository.getProjectMembers(projectId);
+  }
 }

@@ -12,6 +12,15 @@ export class UsersRepository extends BaseRepository<typeof memberTable> {
     super(db, memberTable);
   }
 
+  async findAllUsers() {
+    return this.db
+      .select({
+        id: memberTable.id,
+        username: memberTable.username,
+      })
+      .from(memberTable);
+  }
+
   async findByAuth0Id(auth0Id: string) {
     const results = await this.db
       .select()
@@ -72,8 +81,13 @@ export class UsersRepository extends BaseRepository<typeof memberTable> {
 
   async getProjectMembers(projectId: string) {
     return this.db
-      .select()
+      .select({
+        memberId: projectToMemberTable.memberId,
+        role: projectToMemberTable.role,
+        username: memberTable.username,
+      })
       .from(projectToMemberTable)
+      .innerJoin(memberTable, eq(projectToMemberTable.memberId, memberTable.id))
       .where(eq(projectToMemberTable.projectId, projectId));
   }
 }
