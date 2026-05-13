@@ -14,6 +14,7 @@ interface DocumentSession {
   content: string;
   lastUpdatedAt: Date;
   isDirty: boolean;
+  idleMinutes: number;
 }
 
 @Injectable()
@@ -35,6 +36,8 @@ export class DocumentsSessionService {
     if (existingSessionId) {
       const session = this.sessions.get(existingSessionId);
       if (session) {
+        this.logger.log(`Session cache hit for document ${docId}`);
+        session.idleMinutes = 0;
         return {
           sessionId: existingSessionId,
           content: session.content,
@@ -57,6 +60,7 @@ export class DocumentsSessionService {
       content,
       lastUpdatedAt: new Date(),
       isDirty: false,
+      idleMinutes: 0,
     });
     this.docIdToSessionId.set(docId, sessionId);
 
@@ -90,6 +94,7 @@ export class DocumentsSessionService {
     session.content = updatedContent;
     session.lastUpdatedAt = new Date();
     session.isDirty = true;
+    session.idleMinutes = 0;
 
     this.logger.debug(
       `Applied sync for session ${payload.sessionId}. New length: ${updatedContent.length}`,
@@ -107,6 +112,16 @@ export class DocumentsSessionService {
       this.logger.log(
         `Auto-save: ${dirtySessions.length} sessions are currently dirty.`,
       );
+    }
+
+    for (const [sessionId, session] of this.sessions.entries()) {
+      session.idleMinutes++;
+      
+      if (session.idleMinutes >= 2 && !session.isDirty) {
+        this.logger.log(`Expiring idle session ${sessionId} for document ${session.docId}`);
+        this.sessions.delete(sessionId);
+        this.docIdToSessionId.delete(session.docId);
+      }
     }
   }
 
