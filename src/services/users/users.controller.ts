@@ -78,7 +78,10 @@ export class UsersController {
   async checkProjectRole(
     @Payload() payload: { auth0_id: string; project_id: string },
   ) {
-    console.log(`[Users Controller] Received check-project-role request:`, payload);
+    console.log(
+      `[Users Controller] Received check-project-role request:`,
+      payload,
+    );
     return this.usersService.checkProjectRole(payload);
   }
 }

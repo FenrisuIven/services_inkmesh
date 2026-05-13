@@ -7,6 +7,9 @@ import { UsersModule } from './services/users/users.module';
 import { CharactersModule } from './services/characters/characters.module';
 import { SERVICE_PORTS } from './config/ports';
 import { AllExceptionsRpcFilter } from './filters/rpc.exception.filter';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 async function bootstrapService(
   module: any,

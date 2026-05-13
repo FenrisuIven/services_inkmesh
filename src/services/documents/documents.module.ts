@@ -7,15 +7,8 @@ import { DocumentsSessionService } from './documents-session.service';
 import { GoogleDriveService } from './google-drive.service';
 
 @Module({
-  imports: [
-    DrizzleModule,
-    ScheduleModule.forRoot(),
-  ],
+  imports: [DrizzleModule, ScheduleModule.forRoot()],
   controllers: [DocumentsController],
-  providers: [
-    DocumentsRepository,
-    DocumentsSessionService,
-    GoogleDriveService,
-  ],
+  providers: [DocumentsRepository, DocumentsSessionService, GoogleDriveService],
 })
 export class DocumentsModule {}
