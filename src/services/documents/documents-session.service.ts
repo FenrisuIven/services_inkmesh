@@ -83,24 +83,30 @@ export class DocumentsSessionService {
       return { success: false, message: 'Invalid session' };
     }
 
-    const { startIndex, endIndex, content: newRangeContent } = payload;
+    if (payload.changeType !== 'ping') {
+      const { startIndex, endIndex, content: newRangeContent } = payload;
 
-    const currentContent = session.content;
-    const updatedContent =
-      currentContent.substring(0, startIndex) +
-      newRangeContent +
-      currentContent.substring(endIndex);
+      const currentContent = session.content;
+      const updatedContent =
+        currentContent.substring(0, startIndex) +
+        newRangeContent +
+        currentContent.substring(endIndex);
 
-    session.content = updatedContent;
-    session.lastUpdatedAt = new Date();
-    session.isDirty = true;
+      session.content = updatedContent;
+      session.lastUpdatedAt = new Date();
+      session.isDirty = true;
+
+      this.logger.debug(
+        `Applied sync for session ${payload.sessionId}. New length: ${updatedContent.length}`,
+      );
+    }
+
     session.idleMinutes = 0;
 
-    this.logger.debug(
-      `Applied sync for session ${payload.sessionId}. New length: ${updatedContent.length}`,
-    );
-
-    return { success: true };
+    return {
+      success: true,
+      serverContent: session.content,
+    };
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
