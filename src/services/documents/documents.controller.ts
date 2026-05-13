@@ -60,7 +60,12 @@ export class DocumentsController {
       );
     }
 
-    return await this.repository.create(docData);
+    return await this.repository.create(docData, projectId);
+  }
+
+  @MessagePattern({ cmd: 'get-project-documents' })
+  async getProjectDocuments(@Payload() projectId: string) {
+    return await this.repository.findByProjectId(projectId);
   }
 
   @MessagePattern({ cmd: 'update-document' })
