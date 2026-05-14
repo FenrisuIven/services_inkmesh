@@ -1,0 +1,76 @@
+enum project_role {
+  OWNER
+  MODERATOR
+  WRITER
+}
+
+table characters.characters {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  name text [not null]
+  description text
+  owner_auth0_id text [not null]
+}
+
+table junctions.character_to_member {
+  character_id uuid
+  member_id uuid
+
+  indexes {
+    (character_id, member_id) [pk]
+  }
+}
+
+table projects.documents {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  name text [not null]
+  period_start text
+  period_end text
+  file_path text
+  before_doc_id uuid
+  after_doc_id uuid
+}
+
+table projects.drafts {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+}
+
+table users.members {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  username text [not null]
+  auth0_id text [not null]
+}
+
+table projects.projects {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  name text [not null]
+  description text
+  draft_id uuid
+}
+
+table junctions.project_to_character {
+  project_id uuid
+  character_id uuid
+
+  indexes {
+    (project_id, character_id) [pk]
+  }
+}
+
+table junctions.project_to_documents {
+  project_id uuid
+  document_id uuid
+
+  indexes {
+    (project_id, document_id) [pk]
+  }
+}
+
+table junctions.project_to_member {
+  project_id uuid
+  member_id uuid
+  role project_role
+
+  indexes {
+    (project_id, member_id) [pk]
+  }
+}

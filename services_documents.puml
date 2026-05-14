@@ -1,0 +1,131 @@
+classDiagram
+class GoogleDriveService {
+    -logger: Logger
+    -driveClient: drive_v3.Drive
+    -findFolderByName(folderName: string): Promise<string | null>
+    -getFile(parentFolderName: string, targetFileName: string): Inline
+    +createEmptyFile(folderName: string, fileName: string): Promise<string>
+    +deleteFile(folderName: string, fileName: string): Promise<void>
+    +getFileContent(filePath: string): Promise<string>
+    +uploadFileContent(filePath: string, content: string): Promise<void>
+}
+class BaseRepository~TTable, TInsert, TSelect~ {
+    #db: NodePgDatabase<Record<string, never>>
+    #table: TTable
+    +findAll(): Promise<TSelect[]>
+    +findById(id: string): Promise<TSelect | undefined>
+    +create(data: TInsert): Promise<TSelect>
+    +update(id: string, data: Partial<TInsert>): Promise<TSelect | undefined>
+    +delete(id: string): Promise<boolean>
+}
+<<abstract>> BaseRepository
+BaseRepository <|-- DocumentsRepository
+class DocumentsRepository {
+    +create(data: any, projectId?: string | undefined): Inline
+    +findByProjectId(projectId: string): Inline
+}
+class DocumentSession {
+    +docId: string
+    +content: string
+    +lastUpdatedAt: Date
+    +isDirty: boolean
+    +idleMinutes: number
+}
+<<Interface>> DocumentSession
+class DocumentsSessionService {
+    -logger: Logger
+    -sessions: Map<string, DocumentSession>
+    -docIdToSessionId: Map<string, string>
+    -googleDriveService: GoogleDriveService
+    -repository: DocumentsRepository
+    +initSession(docId: string): Promise<SessionInitResponse>
+    +syncDocument(docId: string, payload: SyncPayload): Promise<SyncResponse>
+    +handleAutoSave(): void
+    +flushToCloudStorage(): Promise<void>
+}
+BaseRepository <|-- UsersRepository
+class UsersRepository {
+    #db: NodePgDatabase<Record<string, never>>
+    +findAllUsers(): Inline
+    +findByAuth0Id(auth0Id: string): Inline
+    +isProjectMember(auth0Id: string, projectId: string): Promise<boolean>
+    +assignRole(projectId: string, memberId: string, role: "OWNER" | "MODERATOR" | "WRITER"): Inline
+    +removeRole(projectId: string, memberId: string): Inline
+    +getProjectMembers(projectId: string): Inline
+}
+class DocumentsController {
+    -logger: Logger
+    -repository: DocumentsRepository
+    -sessionService: DocumentsSessionService
+    -driveService: GoogleDriveService
+    -usersRepository: UsersRepository
+    +initSession(data: Inline): Promise<SessionInitResponse>
+    +syncDocument(data: Inline): Promise<SyncResponse>
+    +getDocuments(): Inline
+    +getDocument(id: string): Inline
+    +createDocument(data: any): Inline
+    +getProjectDocuments(projectId: string): Inline
+    +updateDocument(payload: Inline): Inline
+    +deleteDocument(id: string): Promise<boolean>
+}
+class DrizzleModule {
+}
+class UsersService {
+    -usersRepository: UsersRepository
+    +createMember(data: Inline): Inline
+    +findByAuth0Id(auth0Id: string): Inline
+    +checkProjectRole(payload: Inline): Promise<boolean>
+    +findById(id: string): Inline
+    +updateMember(id: string, data: Inline): Inline
+    +deleteMember(id: string): Promise<boolean>
+    +assignRole(projectId: string, memberId: string, role: "OWNER" | "MODERATOR" | "WRITER"): Inline
+    +removeRole(projectId: string, memberId: string): Inline
+    +getProjectMembers(projectId: string): Inline
+    +findAllUsers(): Inline
+    +findAll(): Inline
+}
+class CreateMemberDto {
+    +username: string
+    +auth0Id: string
+}
+<<Interface>> CreateMemberDto
+class UpdateMemberDto {
+    +username?: string | undefined
+}
+<<Interface>> UpdateMemberDto
+class AssignRoleDto {
+    +projectId: string
+    +memberId: string
+    +role: "OWNER" | "MODERATOR" | "WRITER"
+}
+<<Interface>> AssignRoleDto
+class UsersController {
+    -usersService: UsersService
+    +createMember(data: CreateMemberDto): Inline
+    +findByAuth0Id(auth0Id: string): Inline
+    +getAllUsers(): Inline
+    +getMembers(): Inline
+    +getMember(id: string): Inline
+    +updateMember(payload: Inline): Inline
+    +deleteMember(id: string): Promise<boolean>
+    +assignRole(payload: AssignRoleDto): Inline
+    +removeRole(payload: Inline): Inline
+    +getProjectMembers(projectId: string): Inline
+    +checkProjectRole(payload: Inline): Promise<boolean>
+}
+class UsersModule {
+}
+class DocumentsModule {
+}
+DocumentsSessionService ..> "1" DocumentSession
+DocumentsSessionService ..> "1" GoogleDriveService
+DocumentsSessionService ..> "1" DocumentsRepository
+DocumentsController ..> "1" DocumentsRepository
+DocumentsController ..> "1" DocumentsSessionService
+DocumentsController ..> "1" GoogleDriveService
+DocumentsController ..> "1" UsersRepository
+UsersService ..> "1" UsersRepository
+UsersController ..> "1" UsersService
+UsersController ..> "1" CreateMemberDto
+UsersController ..> "1" UpdateMemberDto
+UsersController ..> "1" AssignRoleDto

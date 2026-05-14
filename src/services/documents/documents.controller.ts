@@ -42,7 +42,6 @@ export class DocumentsController {
   async createDocument(@Payload() data: any) {
     const { ownerId: auth0Id, projectId, ...docData } = data;
 
-    // 1. Resolve internal member ID
     const member = await this.usersRepository.findByAuth0Id(auth0Id);
     if (!member) {
       throw new Error(`Member with auth0Id ${auth0Id} not found`);
@@ -54,7 +53,7 @@ export class DocumentsController {
     try {
       await this.driveService.createEmptyFile(folderName, fileName);
       docData.filePath = `${folderName}/${fileName}`;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Failed to create Google Drive file for document: ${error.message}`,
       );
@@ -81,7 +80,9 @@ export class DocumentsController {
       try {
         await this.driveService.deleteFile(folderName, fileName);
       } catch (error) {
-        this.logger.error(`Failed to delete Google Drive file for document ${id}: ${error.message}`);
+        this.logger.error(
+          `Failed to delete Google Drive file for document ${id}: ${error.message}`,
+        );
       }
     }
 
