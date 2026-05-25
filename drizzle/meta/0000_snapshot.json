@@ -1,5 +1,5 @@
 {
-  "id": "a6bbf408-c64d-4e11-9d81-0950acc4aad4",
+  "id": "212a6c6c-4e69-451d-99a2-508726d96fe6",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -32,6 +32,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "is_public": {
+          "name": "is_public",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},
@@ -497,6 +504,13 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "project_role",
+          "typeSchema": "junctions",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -545,7 +559,17 @@
       "isRLSEnabled": false
     }
   },
-  "enums": {},
+  "enums": {
+    "junctions.project_role": {
+      "name": "project_role",
+      "schema": "junctions",
+      "values": [
+        "OWNER",
+        "MODERATOR",
+        "WRITER"
+      ]
+    }
+  },
   "schemas": {
     "characters": "characters",
     "chats": "chats",

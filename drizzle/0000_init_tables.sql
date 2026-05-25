@@ -8,11 +8,13 @@ CREATE SCHEMA "projects";
 --> statement-breakpoint
 CREATE SCHEMA "users";
 --> statement-breakpoint
+CREATE TYPE "junctions"."project_role" AS ENUM('OWNER', 'MODERATOR', 'WRITER');--> statement-breakpoint
 CREATE TABLE "characters"."characters" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
 	"description" text,
-	"owner_auth0_id" text NOT NULL
+	"owner_auth0_id" text NOT NULL,
+	"is_public" boolean DEFAULT false NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "junctions"."character_to_member" (
@@ -77,6 +79,7 @@ CREATE TABLE "junctions"."project_to_documents" (
 CREATE TABLE "junctions"."project_to_member" (
 	"project_id" uuid,
 	"member_id" uuid,
+	"role" "junctions"."project_role",
 	CONSTRAINT "project_to_member_pkey" PRIMARY KEY("project_id","member_id")
 );
 --> statement-breakpoint

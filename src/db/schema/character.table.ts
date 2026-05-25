@@ -7,4 +7,5 @@ export const characterTable = charactersSchema.table('characters', {
   name: p.text().notNull(),
   description: p.text(),
   ownerAuth0Id: p.text('owner_auth0_id').notNull(),
+  isPublic: p.boolean('is_public').default(false).notNull(),
 });

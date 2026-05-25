@@ -1,6 +1,6 @@
 {
-  "id": "88cdb958-5b6c-4d11-bea3-3a3055e6ceb9",
-  "prevId": "de321e73-df6c-4ab5-9493-0b369b20b6af",
+  "id": "bffaea86-b117-4fe3-bad5-d3ea80580e5e",
+  "prevId": "460f22cf-47dc-4fa1-9e7b-c99934ccd06b",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -27,18 +27,18 @@
           "primaryKey": false,
           "notNull": false
         },
-        "is_public": {
-          "name": "is_public",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
         "owner_auth0_id": {
           "name": "owner_auth0_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "is_public": {
+          "name": "is_public",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},
@@ -141,10 +141,31 @@
           "primaryKey": false,
           "notNull": false,
           "default": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "chat_rooms_project_id_projects_id_fk": {
+          "name": "chat_rooms_project_id_projects_id_fk",
+          "tableFrom": "chat_rooms",
+          "tableTo": "projects",
+          "schemaTo": "projects",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -201,6 +222,59 @@
       },
       "indexes": {},
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "projects.draft_chunks": {
+      "name": "draft_chunks",
+      "schema": "projects",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "draft_id": {
+          "name": "draft_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "draft_chunks_draft_id_drafts_id_fk": {
+          "name": "draft_chunks_draft_id_drafts_id_fk",
+          "tableFrom": "draft_chunks",
+          "tableTo": "drafts",
+          "schemaTo": "projects",
+          "columnsFrom": [
+            "draft_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -282,8 +356,21 @@
           "primaryKey": false,
           "notNull": true
         },
+        "sent_at": {
+          "name": "sent_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
         "roomId": {
           "name": "roomId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sender_id": {
+          "name": "sender_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -298,6 +385,20 @@
           "schemaTo": "chats",
           "columnsFrom": [
             "roomId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "messages_sender_id_members_id_fk": {
+          "name": "messages_sender_id_members_id_fk",
+          "tableFrom": "messages",
+          "tableTo": "members",
+          "schemaTo": "users",
+          "columnsFrom": [
+            "sender_id"
           ],
           "columnsTo": [
             "id"
@@ -557,19 +658,50 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+    },
+    "chats.voice_chat": {
+      "name": "voice_chat",
+      "schema": "chats",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "voice_chat_project_id_projects_id_fk": {
+          "name": "voice_chat_project_id_projects_id_fk",
+          "tableFrom": "voice_chat",
+          "tableTo": "projects",
+          "schemaTo": "projects",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
-  "enums": {
-    "junctions.project_role": {
-      "name": "project_role",
-      "schema": "junctions",
-      "values": [
-        "OWNER",
-        "MODERATOR",
-        "WRITER"
-      ]
-    }
-  },
+  "enums": {},
   "schemas": {
     "characters": "characters",
     "chats": "chats",

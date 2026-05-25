@@ -1,15 +1,66 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql, or, notExists } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DRIZZLE_CLIENT } from '../drizzle/drizzle.provider';
 import { characterTable } from '../schema/character.table';
 import { characterToMemberTable } from '../schema/characters.to.members.table';
+import { projectToCharacterTable } from '../schema/projects.to.characters.table';
+import { memberTable } from '../schema/member.table';
 import { BaseRepository } from './base.repository';
 
 @Injectable()
 export class CharactersRepository extends BaseRepository<typeof characterTable> {
   constructor(@Inject(DRIZZLE_CLIENT) protected readonly db: NodePgDatabase) {
     super(db, characterTable);
+  }
+
+  async getAvailableForProject(
+    projectId: string,
+    auth0Id: string,
+    role: string,
+  ) {
+    const isLinkedSubquery = this.db
+      .select()
+      .from(projectToCharacterTable)
+      .where(
+        and(
+          eq(projectToCharacterTable.projectId, projectId),
+          eq(projectToCharacterTable.characterId, characterTable.id),
+        ),
+      );
+
+    const baseQuery = this.db
+      .select({
+        id: characterTable.id,
+        name: characterTable.name,
+        description: characterTable.description,
+        isPublic: characterTable.isPublic,
+        ownerAuth0Id: characterTable.ownerAuth0Id,
+        ownerName: memberTable.username,
+      })
+      .from(characterTable)
+      .leftJoin(memberTable, eq(characterTable.ownerAuth0Id, memberTable.auth0_id));
+
+    if (role === 'WRITER') {
+      // Writers can only see their own characters that are not yet linked
+      return await baseQuery.where(
+        and(
+          eq(characterTable.ownerAuth0Id, auth0Id),
+          notExists(isLinkedSubquery),
+        ),
+      );
+    }
+
+    // Owners and Moderators see all public characters + their own hidden characters
+    return await baseQuery.where(
+      and(
+        or(
+          eq(characterTable.isPublic, true),
+          eq(characterTable.ownerAuth0Id, auth0Id),
+        ),
+        notExists(isLinkedSubquery),
+      ),
+    );
   }
 
   async findByOwner(auth0Id: string) {

@@ -3,11 +3,8 @@ import * as p from 'drizzle-orm/pg-core';
 import { chatsSchema } from './chats.schema';
 import { projectTable } from './project.table';
 
-export const chatRoomTable = chatsSchema.table('chat_rooms', {
+export const voiceChatTable = chatsSchema.table('voice_chat', {
   id: p.uuid().defaultRandom().primaryKey(),
-  createdAt: p.timestamp('created_at').defaultNow(),
-  expiresAt: p.timestamp('expires_at'),
-  active: p.boolean().default(true),
   projectId: p
     .uuid('project_id')
     .notNull()
