@@ -4,7 +4,7 @@ import { DocumentsRepository } from '../../db/repositories/documents.repository'
 import { DocumentsSessionService } from './documents-session.service';
 import { DOCUMENT_MESSAGES, SyncPayload } from '@inkmesh/contracts';
 import { GoogleDriveService } from './google-drive.service';
-import { UsersRepository } from '../../db/repositories/users.repository';
+import { ProjectsRepository } from '../../db/repositories/projects.repository';
 
 @Controller()
 export class DocumentsController {
@@ -12,9 +12,9 @@ export class DocumentsController {
 
   constructor(
     private readonly repository: DocumentsRepository,
+    private readonly projectsRepo: ProjectsRepository,
     private readonly sessionService: DocumentsSessionService,
     private readonly driveService: GoogleDriveService,
-    private readonly usersRepository: UsersRepository,
   ) {}
 
   @MessagePattern({ cmd: DOCUMENT_MESSAGES.INIT_SESSION })
@@ -42,12 +42,12 @@ export class DocumentsController {
   async createDocument(@Payload() data: any) {
     const { ownerId: auth0Id, projectId, ...docData } = data;
 
-    const member = await this.usersRepository.findByAuth0Id(auth0Id);
-    if (!member) {
-      throw new Error(`Member with auth0Id ${auth0Id} not found`);
+    const ownerId = await this.projectsRepo.getOwnerId(projectId);
+    if (!ownerId) {
+      throw new Error('Project owner not found');
     }
 
-    const folderName = `${member.id}|${projectId}`;
+    const folderName = `${ownerId}|${projectId}`;
     const fileName = docData.name;
 
     try {

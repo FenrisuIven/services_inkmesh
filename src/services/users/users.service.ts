@@ -30,6 +30,10 @@ export class UsersService {
     );
   }
 
+  async getProjectRole(auth0Id: string, projectId: string) {
+    return this.usersRepository.getProjectRole(auth0Id, projectId);
+  }
+
   async findById(id: string) {
     return this.usersRepository.findById(id);
   }
