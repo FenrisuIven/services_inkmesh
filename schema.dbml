@@ -9,6 +9,7 @@ table characters.characters {
   name text [not null]
   description text
   owner_auth0_id text [not null]
+  is_public boolean [not null, default: false]
 }
 
 table junctions.character_to_member {
@@ -18,6 +19,14 @@ table junctions.character_to_member {
   indexes {
     (character_id, member_id) [pk]
   }
+}
+
+table chats.chat_rooms {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  created_at timestamp [default: `now()`]
+  expires_at timestamp
+  active boolean [default: true]
+  project_id uuid [not null]
 }
 
 table projects.documents {
@@ -38,6 +47,15 @@ table users.members {
   id uuid [pk, not null, default: `gen_random_uuid()`]
   username text [not null]
   auth0_id text [not null]
+}
+
+table chats.messages {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  sender_name text
+  content text [not null]
+  sent_at timestamp [default: `now()`]
+  roomId uuid [not null]
+  sender_id uuid [not null]
 }
 
 table projects.projects {
@@ -73,4 +91,9 @@ table junctions.project_to_member {
   indexes {
     (project_id, member_id) [pk]
   }
+}
+
+table chats.voice_chat {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  project_id uuid [not null]
 }
