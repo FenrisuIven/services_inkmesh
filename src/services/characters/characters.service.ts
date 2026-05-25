@@ -54,6 +54,27 @@ export class CharactersService {
     return characters as CharacterResponseDto[];
   }
 
+  async getAvailableForProject(
+    auth0Id: string,
+    projectId: string,
+  ): Promise<CharacterResponseDto[]> {
+    const role = await this.usersService.getProjectRole(auth0Id, projectId);
+    if (!role) {
+      throw new RpcException({
+        status: 403,
+        message: 'Not a member of this project',
+      });
+    }
+
+    const characters = await this.charactersRepository.getAvailableForProject(
+      projectId,
+      auth0Id,
+      role,
+    );
+
+    return characters as CharacterResponseDto[];
+  }
+
   async getOne(
     auth0Id: string,
     characterId: string,

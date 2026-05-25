@@ -4,10 +4,11 @@ import { ProjectsController } from './projects.controller';
 import { DrizzleModule } from '../../db/drizzle/drizzle.module';
 import { GoogleDriveService } from './google-drive.service';
 import { UsersModule } from '../users/users.module';
+import { DraftsRepository } from '../../db/repositories/drafts.repository';
 
 @Module({
   imports: [DrizzleModule, UsersModule],
   controllers: [ProjectsController],
-  providers: [ProjectsRepository, GoogleDriveService],
+  providers: [ProjectsRepository, GoogleDriveService, DraftsRepository],
 })
 export class ProjectsModule {}

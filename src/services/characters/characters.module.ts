@@ -10,6 +10,6 @@ import { GoogleDriveService } from './google-drive.service';
   imports: [DrizzleModule, UsersModule],
   controllers: [CharactersController],
   providers: [CharactersService, CharactersRepository, GoogleDriveService],
-  exports: [CharactersService],
+  exports: [CharactersService, CharactersRepository],
 })
 export class CharactersModule {}

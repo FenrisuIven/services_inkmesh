@@ -22,6 +22,16 @@ export class CharactersController {
     return this.charactersService.getMe(data.auth0Id);
   }
 
+  @MessagePattern(CHARACTER_MESSAGES.GET_AVAILABLE_FOR_PROJECT)
+  getAvailableForProject(
+    @Payload() data: { auth0Id: string; projectId: string },
+  ) {
+    return this.charactersService.getAvailableForProject(
+      data.auth0Id,
+      data.projectId,
+    );
+  }
+
   @MessagePattern(CHARACTER_MESSAGES.GET_ONE)
   getOne(@Payload() data: { auth0Id: string; characterId: string }) {
     return this.charactersService.getOne(data.auth0Id, data.characterId);
