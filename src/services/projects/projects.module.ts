@@ -10,5 +10,6 @@ import { DraftsRepository } from '../../db/repositories/drafts.repository';
   imports: [DrizzleModule, UsersModule],
   controllers: [ProjectsController],
   providers: [ProjectsRepository, GoogleDriveService, DraftsRepository],
+  exports: [ProjectsRepository, DraftsRepository],
 })
 export class ProjectsModule {}

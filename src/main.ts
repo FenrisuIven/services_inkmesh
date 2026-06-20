@@ -5,6 +5,7 @@ import { ProjectsModule } from './services/projects/projects.module';
 import { DraftsModule } from './services/drafts/drafts.module';
 import { UsersModule } from './services/users/users.module';
 import { CharactersModule } from './services/characters/characters.module';
+import { ChatRoomsModule } from './services/chat.rooms/chat.rooms.module';
 import { SERVICE_PORTS } from './config/ports';
 import { AllExceptionsRpcFilter } from './filters/rpc.exception.filter';
 import * as dotenv from 'dotenv';
@@ -44,6 +45,7 @@ async function bootstrap() {
     bootstrapService(DraftsModule, SERVICE_PORTS.DRAFTS, 'Drafts'),
     bootstrapService(UsersModule, SERVICE_PORTS.USERS, 'Users'),
     bootstrapService(CharactersModule, SERVICE_PORTS.CHARACTERS, 'Characters'),
+    bootstrapService(ChatRoomsModule, SERVICE_PORTS.CHAT_ROOMS, 'Chat Rooms'),
   ]);
 
   console.log('All microservices initialized.');

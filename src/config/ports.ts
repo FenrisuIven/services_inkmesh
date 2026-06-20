@@ -4,4 +4,5 @@ export const SERVICE_PORTS = {
   DRAFTS: 4004,
   USERS: 4005,
   CHARACTERS: 4006,
+  CHAT_ROOMS: 4007,
 };

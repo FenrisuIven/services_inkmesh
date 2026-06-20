@@ -113,7 +113,6 @@ export class CharactersService {
     characterId: string,
     dto: UpdateCharacterVisibilityDto,
   ): Promise<CharacterResponseDto> {
-    // isPublic not synced in DB yet, returning current character
     const character = await this.charactersRepository.findById(characterId);
     return character as CharacterResponseDto;
   }
@@ -172,7 +171,6 @@ export class CharactersService {
       });
     }
 
-    // Mock delete from GDrive
     return;
   }
 
