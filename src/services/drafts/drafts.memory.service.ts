@@ -2,9 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { DraftsRepository } from '../../db/repositories/drafts.repository';
 import { DraftUpdatePayload } from '@inkmesh/contracts';
+import Delta from 'quill-delta';
 
 interface DraftSession {
-  content: string;
+  content: Delta; // Changed to Delta
   isDirty: boolean;
   lastUpdatedAt: Date;
 }
@@ -16,10 +17,11 @@ export class DraftsMemoryService {
 
   constructor(private readonly repository: DraftsRepository) {}
 
-  async getDraftContent(projectId: string): Promise<string> {
+  async getDraftContent(projectId: string): Promise<any> {
+    this.logger.log(`getDraftContent called for ${projectId}`);
     const session = this.sessions.get(projectId);
     if (session) {
-      return session.content;
+      return session.content.ops;
     }
 
     const draftId = await this.repository.findOrCreateDraftByProjectId(projectId);
@@ -27,18 +29,21 @@ export class DraftsMemoryService {
       throw new Error(`Failed to ensure draft for project ${projectId}`);
     }
 
-    const content = await this.repository.getDraftContent(draftId);
+    const contentStr = await this.repository.getDraftContent(draftId);
+    // Assume stored as HTML for now, convert to Delta
+    const content = new Delta([{insert: contentStr}]); 
     this.sessions.set(projectId, {
       content,
       isDirty: false,
       lastUpdatedAt: new Date(),
     });
 
-    return content;
+    return content.ops;
   }
 
   async applyUpdate(payload: DraftUpdatePayload): Promise<void> {
-    const { projectId, startIndex, endIndex, content: newRangeContent } = payload;
+    this.logger.log(`applyUpdate called for ${payload.projectId}`);
+    const { projectId, delta } = payload;
     
     let session = this.sessions.get(projectId);
     if (!session) {
@@ -46,17 +51,12 @@ export class DraftsMemoryService {
       session = this.sessions.get(projectId)!;
     }
 
-    const currentContent = session.content;
-    const updatedContent =
-      currentContent.substring(0, startIndex) +
-      newRangeContent +
-      currentContent.substring(endIndex);
-
-    session.content = updatedContent;
+    const incomingDelta = new Delta(delta);
+    session.content = session.content.compose(incomingDelta);
     session.isDirty = true;
     session.lastUpdatedAt = new Date();
 
-    this.logger.debug(`Applied update to draft ${projectId}. New length: ${updatedContent.length}`);
+    this.logger.debug(`Applied update to draft ${projectId}.`);
   }
 
   @Cron(CronExpression.EVERY_10_SECONDS)
@@ -73,7 +73,9 @@ export class DraftsMemoryService {
       try {
         const draftId = await this.repository.findByProjectId(projectId);
         if (draftId) {
-          await this.repository.saveDraftContent(draftId, session.content);
+          // Convert Delta to something that can be stored in DB (e.g., JSON string or keep as HTML if needed?)
+          // For now, let's keep it as JSON stringified Delta
+          await this.repository.saveDraftContent(draftId, JSON.stringify(session.content.ops));
           session.isDirty = false;
           this.logger.log(`Successfully flushed draft for project ${projectId}`);
         }
