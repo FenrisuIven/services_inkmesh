@@ -120,7 +120,7 @@ export class CharactersService {
   async uploadImage(
     auth0Id: string,
     characterId: string,
-    file: { buffer: Buffer; size: number; originalname: string },
+    file: { buffer: Buffer; size: number; originalname: string; mimetype: string },
   ): Promise<CharacterImageResponseDto> {
     if (file.size > 2 * 1024 * 1024) {
       throw new RpcException({
@@ -141,16 +141,22 @@ export class CharactersService {
       });
     }
 
+    // Convert the received serialized object to a real Buffer
+    const buffer = Buffer.isBuffer(file.buffer) 
+      ? file.buffer 
+      : Buffer.from((file.buffer as any).data);
+
     const imageId = uuidv4();
-    const filePath = `/characters/${characterId}/${imageId}`;
-    await this.googleDriveService.uploadFileContent(
-      filePath,
-      file.buffer.toString('base64'),
+    const gDriveFileId = await this.googleDriveService.uploadImage(
+      characterId,
+      imageId,
+      buffer,
+      file.mimetype,
     );
 
     return {
-      id: imageId,
-      url: `mock://gdrive${filePath}`,
+      id: gDriveFileId,
+      url: `gdrive://${gDriveFileId}`,
     };
   }
 
@@ -171,6 +177,8 @@ export class CharactersService {
       });
     }
 
+    await this.googleDriveService.deleteImage(characterId, imageId);
+
     return;
   }
 
@@ -183,15 +191,22 @@ export class CharactersService {
       throw new RpcException({ status: 404, message: 'Character not found' });
     }
 
-    return [
-      {
-        id: 'mock-img-1',
-        url: `mock://gdrive/characters/${characterId}/mock-img-1`,
-      },
-      {
-        id: 'mock-img-2',
-        url: `mock://gdrive/characters/${characterId}/mock-img-2`,
-      },
-    ];
+    const images = await this.googleDriveService.listImages(characterId);
+
+    return images.map(img => ({
+      id: img.id,
+      url: `gdrive://${img.id}`,
+    }));
+  }
+
+  async downloadImage(auth0Id: string, characterId: string, imageId: string): Promise<Buffer> {
+    const character = await this.charactersRepository.findById(characterId);
+    if (!character) {
+      throw new RpcException({ status: 404, message: 'Character not found' });
+    }
+
+    // Optional: add authorization check here to ensure the user can view the character/image
+    
+    return await this.googleDriveService.downloadImage(imageId);
   }
 }

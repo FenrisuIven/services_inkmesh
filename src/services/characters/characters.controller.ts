@@ -100,4 +100,16 @@ export class CharactersController {
   getImages(@Payload() data: { auth0Id: string; characterId: string }) {
     return this.charactersService.getImages(data.auth0Id, data.characterId);
   }
+
+  @MessagePattern(CHARACTER_MESSAGES.IMAGES_DOWNLOAD)
+  downloadImage(
+    @Payload() data: { auth0Id: string; characterId: string; imageId: string },
+  ) {
+    console.log('--- Received IMAGES_DOWNLOAD request ---', data);
+    return this.charactersService.downloadImage(
+      data.auth0Id,
+      data.characterId,
+      data.imageId,
+    );
+  }
 }
