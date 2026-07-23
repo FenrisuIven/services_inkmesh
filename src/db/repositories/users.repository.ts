@@ -1,9 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { eq, and } from 'drizzle-orm';
+
 import { DRIZZLE_CLIENT } from '../drizzle/drizzle.provider';
-import { memberTable } from '../schema/member.table';
-import { projectToMemberTable } from '../schema/projects.to.members.table';
+
+import { projectToMemberTable, memberTable } from '../schema';
 import { BaseRepository } from './base.repository';
 
 @Injectable()

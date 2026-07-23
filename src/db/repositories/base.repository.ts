@@ -1,8 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { DRIZZLE_CLIENT } from '../drizzle/drizzle.provider';
 import { PgTableWithColumns } from 'drizzle-orm/pg-core';
 import { eq } from 'drizzle-orm';
+
+import { DRIZZLE_CLIENT } from '../drizzle/drizzle.provider';
 
 @Injectable()
 export abstract class BaseRepository<
@@ -16,42 +17,41 @@ export abstract class BaseRepository<
   ) {}
 
   async findAll(): Promise<TSelect[]> {
-    return (await this.db.select().from(this.table as any)) as TSelect[];
+    return (await this.db
+      .select()
+      .from(this.table as PgTableWithColumns<any>)) as TSelect[];
   }
 
   async findById(id: string): Promise<TSelect | undefined> {
     const results = await this.db
       .select()
-      .from(this.table as any)
-      .where(eq((this.table as any).id, id));
+      .from(this.table as PgTableWithColumns<any>)
+      .where(eq(this.table.id, id));
     return results[0] as TSelect | undefined;
   }
 
   async create(data: TInsert): Promise<TSelect> {
-    const results = (await this.db
-      .insert(this.table as any)
-      .values(data as any)
-      .returning()) as TSelect[];
-    return results[0];
+    const results = await this.db.insert(this.table).values(data).returning();
+    return results[0] as TSelect;
   }
 
   async update(
     id: string,
     data: Partial<TInsert>,
   ): Promise<TSelect | undefined> {
-    const results = (await this.db
-      .update(this.table as any)
-      .set(data as any)
-      .where(eq((this.table as any).id, id))
-      .returning()) as TSelect[];
-    return results[0];
+    const results: Record<string, any> = await this.db
+      .update(this.table)
+      .set(data as Record<string, any>)
+      .where(eq(this.table.id, id))
+      .returning();
+    return results[0] as TSelect | undefined;
   }
 
   async delete(id: string): Promise<boolean> {
-    const result = (await this.db
-      .delete(this.table as any)
-      .where(eq((this.table as any).id, id))
-      .returning()) as any[];
+    const result = await this.db
+      .delete(this.table)
+      .where(eq(this.table.id, id))
+      .returning();
     return result.length > 0;
   }
 }

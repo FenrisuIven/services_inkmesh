@@ -1,15 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, sql, or, notExists } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { and, eq, sql, or, notExists } from 'drizzle-orm';
+
 import { DRIZZLE_CLIENT } from '../drizzle/drizzle.provider';
-import { characterTable } from '../schema/character.table';
-import { characterToMemberTable } from '../schema/characters.to.members.table';
-import { projectToCharacterTable } from '../schema/projects.to.characters.table';
-import { memberTable } from '../schema/member.table';
+
+import {
+  characterTable,
+  characterToMemberTable,
+  projectToCharacterTable,
+  memberTable,
+} from '../schema';
 import { BaseRepository } from './base.repository';
 
 @Injectable()
-export class CharactersRepository extends BaseRepository<typeof characterTable> {
+export class CharactersRepository extends BaseRepository<
+  typeof characterTable
+> {
   constructor(@Inject(DRIZZLE_CLIENT) protected readonly db: NodePgDatabase) {
     super(db, characterTable);
   }
@@ -19,7 +25,7 @@ export class CharactersRepository extends BaseRepository<typeof characterTable> 
     auth0Id: string,
     role: string,
   ) {
-    const isLinkedSubquery = this.db
+    const isCharacterLinked = this.db
       .select()
       .from(projectToCharacterTable)
       .where(
@@ -39,26 +45,27 @@ export class CharactersRepository extends BaseRepository<typeof characterTable> 
         ownerName: memberTable.username,
       })
       .from(characterTable)
-      .leftJoin(memberTable, eq(characterTable.ownerAuth0Id, memberTable.auth0_id));
+      .leftJoin(
+        memberTable,
+        eq(characterTable.ownerAuth0Id, memberTable.auth0_id),
+      );
 
     if (role === 'WRITER') {
-      // Writers can only see their own characters that are not yet linked
-      return await baseQuery.where(
+      return baseQuery.where(
         and(
           eq(characterTable.ownerAuth0Id, auth0Id),
-          notExists(isLinkedSubquery),
+          notExists(isCharacterLinked),
         ),
       );
     }
 
-    // Owners and Moderators see all public characters + their own hidden characters
-    return await baseQuery.where(
+    return baseQuery.where(
       and(
         or(
           eq(characterTable.isPublic, true),
           eq(characterTable.ownerAuth0Id, auth0Id),
         ),
-        notExists(isLinkedSubquery),
+        notExists(isCharacterLinked),
       ),
     );
   }
@@ -78,12 +85,12 @@ export class CharactersRepository extends BaseRepository<typeof characterTable> 
     return Number(result[0]?.count ?? 0);
   }
 
-  async createWithMember(data: typeof characterTable.$inferInsert, memberId: string) {
+  async createWithMember(
+    data: typeof characterTable.$inferInsert,
+    memberId: string,
+  ) {
     return await this.db.transaction(async (tx) => {
-      const character = await tx
-        .insert(this.table)
-        .values(data)
-        .returning();
+      const character = await tx.insert(this.table).values(data).returning();
 
       const charId = character[0].id;
 

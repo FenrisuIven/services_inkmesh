@@ -12,7 +12,6 @@ export class AllExceptionsRpcFilter implements RpcExceptionFilter<any> {
         ? exception.getError()
         : { message: exception.message || 'Internal server error', };
 
-    // Returns the error object as a normal response to avoid throwing on the client side
     return of({
       success: false,
       error: error,

@@ -5,6 +5,7 @@ export * from './chat.room.table';
 export * from './chats.schema';
 export * from './document.table';
 export * from './draft.table';
+export * from './draft.chunk.table';
 export * from './junctions.schema';
 export * from './member.table';
 export * from './message.table';
@@ -16,4 +17,3 @@ export * from './projects.to.documents.table';
 export * from './projects.to.members.table';
 export * from './users.schema';
 export * from './voice.chat.table';
-

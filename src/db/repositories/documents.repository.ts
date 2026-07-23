@@ -1,10 +1,24 @@
-import { BaseRepository } from './base.repository';
-import { documentTable } from '../schema/document.table';
-import { projectToDocumentsTable } from '../schema/projects.to.documents.table';
 import { Inject, Injectable } from '@nestjs/common';
-import { DRIZZLE_CLIENT } from '../drizzle/drizzle.provider';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
+
+import { DRIZZLE_CLIENT } from '../drizzle/drizzle.provider';
+
+import { documentTable, projectToDocumentsTable } from '../schema';
+import { BaseRepository } from './base.repository';
+
+// TODO: Move to contracts
+interface Document {
+  id: string;
+  name: string;
+  periodStart: string | null;
+  periodEnd: string | null;
+  filePath: string | null;
+  beforeDocId: string | null;
+  afterDocId: string | null;
+}
+
+type CreateDocumentDto = Omit<Document, 'id'>;
 
 @Injectable()
 export class DocumentsRepository extends BaseRepository<typeof documentTable> {
@@ -12,7 +26,7 @@ export class DocumentsRepository extends BaseRepository<typeof documentTable> {
     super(db, documentTable);
   }
 
-  async create(data: any, projectId?: string) {
+  async create(data: CreateDocumentDto, projectId?: string) {
     const document = await super.create(data);
 
     if (projectId) {

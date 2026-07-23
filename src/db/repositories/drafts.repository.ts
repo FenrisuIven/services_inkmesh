@@ -1,11 +1,11 @@
-import { BaseRepository } from './base.repository';
-import { draftTable } from '../schema/draft.table';
-import { draftChunkTable } from '../schema/draft.chunk.table';
-import { projectTable } from '../schema/project.table';
 import { Inject, Injectable } from '@nestjs/common';
-import { DRIZZLE_CLIENT } from '../drizzle/drizzle.provider';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq, asc } from 'drizzle-orm';
+
+import { DRIZZLE_CLIENT } from '../drizzle/drizzle.provider';
+
+import { draftTable, projectTable, draftChunkTable } from '../schema';
+import { BaseRepository } from './base.repository';
 
 @Injectable()
 export class DraftsRepository extends BaseRepository<typeof draftTable> {
@@ -26,11 +26,9 @@ export class DraftsRepository extends BaseRepository<typeof draftTable> {
     const draftId = await this.findByProjectId(projectId);
     if (draftId) return draftId;
 
-    // Create new draft
     const draft = await this.create({});
     if (!draft) throw new Error('Failed to create draft');
 
-    // Link to project
     await this.db
       .update(projectTable)
       .set({ draftId: draft.id })
@@ -51,12 +49,12 @@ export class DraftsRepository extends BaseRepository<typeof draftTable> {
 
   async saveDraftContent(draftId: string, content: string): Promise<void> {
     const lines = content.split('\n');
-    
-    await this.db.transaction(async (tx) => {
-      // 1. Delete existing chunks
-      await tx.delete(draftChunkTable).where(eq(draftChunkTable.draftId, draftId));
 
-      // 2. Insert new chunks in order
+    await this.db.transaction(async (tx) => {
+      await tx
+        .delete(draftChunkTable)
+        .where(eq(draftChunkTable.draftId, draftId));
+
       if (lines.length > 0) {
         await tx.insert(draftChunkTable).values(
           lines.map((line, index) => ({

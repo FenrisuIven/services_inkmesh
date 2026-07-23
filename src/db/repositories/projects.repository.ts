@@ -1,13 +1,17 @@
-import { BaseRepository } from './base.repository';
-import { projectTable } from '../schema/project.table';
 import { Inject, Injectable } from '@nestjs/common';
-import { DRIZZLE_CLIENT } from '../drizzle/drizzle.provider';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { projectToMemberTable } from '../schema/projects.to.members.table';
 import { and, eq } from 'drizzle-orm';
-import { memberTable } from '../schema/member.table';
-import { projectToCharacterTable } from '../schema/projects.to.characters.table';
-import { characterTable } from '../schema/character.table';
+
+import { DRIZZLE_CLIENT } from '../drizzle/drizzle.provider';
+
+import {
+  characterTable,
+  memberTable,
+  projectToCharacterTable,
+  projectToMemberTable,
+  projectTable,
+} from '../schema';
+import { BaseRepository } from './base.repository';
 
 @Injectable()
 export class ProjectsRepository extends BaseRepository<typeof projectTable> {
@@ -16,7 +20,7 @@ export class ProjectsRepository extends BaseRepository<typeof projectTable> {
   }
 
   async getProjectCharacters(projectId: string) {
-    return await this.db
+    return this.db
       .select({
         id: characterTable.id,
         name: characterTable.name,
@@ -30,19 +34,22 @@ export class ProjectsRepository extends BaseRepository<typeof projectTable> {
         projectToCharacterTable,
         eq(characterTable.id, projectToCharacterTable.characterId),
       )
-      .leftJoin(memberTable, eq(characterTable.ownerAuth0Id, memberTable.auth0_id))
+      .leftJoin(
+        memberTable,
+        eq(characterTable.ownerAuth0Id, memberTable.auth0_id),
+      )
       .where(eq(projectToCharacterTable.projectId, projectId));
   }
 
   async linkCharacter(projectId: string, characterId: string) {
-    return await this.db
+    return this.db
       .insert(projectToCharacterTable)
       .values({ projectId, characterId })
       .onConflictDoNothing();
   }
 
   async unlinkCharacter(projectId: string, characterId: string) {
-    return await this.db
+    return this.db
       .delete(projectToCharacterTable)
       .where(
         and(
@@ -83,7 +90,7 @@ export class ProjectsRepository extends BaseRepository<typeof projectTable> {
   }
 
   async getProjectsByCharacter(characterId: string) {
-    return await this.db
+    return this.db
       .select({
         id: projectTable.id,
         name: projectTable.name,
@@ -98,7 +105,7 @@ export class ProjectsRepository extends BaseRepository<typeof projectTable> {
   }
 
   async findByAuth0Id(auth0Id: string) {
-    return await this.db
+    return this.db
       .select({
         id: projectTable.id,
         name: projectTable.name,
