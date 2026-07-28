@@ -1,31 +1,36 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import {
-  CHARACTER_MESSAGES,
+import type {
   CreateCharacterDto,
   UpdateCharacterDto,
   UpdateCharacterVisibilityDto,
+  GetAvailableForProjectDto,
+  GetMemberCharactersDto,
+  GetOneCharacterDto,
+  UploadCharacterImageDto,
+  DeleteCharacterImageDto,
+  GetCharacterImagesDto,
 } from '@inkmesh/contracts';
+import { CHARACTER_MESSAGES } from '@inkmesh/contracts';
 import { CharactersService } from './characters.service';
 
 @Controller()
 export class CharactersController {
   constructor(private readonly charactersService: CharactersService) {}
 
+  // WARNING: Character: Changed the message pattern to 'characters.create'
   @MessagePattern(CHARACTER_MESSAGES.CREATE)
-  create(@Payload() data: { auth0Id: string; dto: CreateCharacterDto }) {
-    return this.charactersService.create(data.auth0Id, data.dto);
+  create(@Payload() data: CreateCharacterDto) {
+    return this.charactersService.create(data.ownerAuth0Id, data);
   }
 
   @MessagePattern(CHARACTER_MESSAGES.GET_ME)
-  getMe(@Payload() data: { auth0Id: string }) {
-    return this.charactersService.getMe(data.auth0Id);
+  getMe(@Payload() data: GetMemberCharactersDto) {
+    return this.charactersService.getMe(data.ownerAuth0Id);
   }
 
   @MessagePattern(CHARACTER_MESSAGES.GET_AVAILABLE_FOR_PROJECT)
-  getAvailableForProject(
-    @Payload() data: { auth0Id: string; projectId: string },
-  ) {
+  getAvailableForProject(@Payload() data: GetAvailableForProjectDto) {
     return this.charactersService.getAvailableForProject(
       data.auth0Id,
       data.projectId,
@@ -33,21 +38,30 @@ export class CharactersController {
   }
 
   @MessagePattern(CHARACTER_MESSAGES.GET_ONE)
-  getOne(@Payload() data: { auth0Id: string; characterId: string }) {
-    return this.charactersService.getOne(data.auth0Id, data.characterId);
+  getOne(@Payload() data: GetOneCharacterDto) {
+    //TODO: Fix logic
+    if (!data.id && !data.ownerAuth0Id) {
+      throw new Error(
+        'Either id or ownerAuth0Id must be provided to get a character',
+      );
+    }
+    if (!data.id) {
+      throw new Error('Character id must be provided to get a character');
+    }
+    return this.charactersService.getOne(data.id, data.ownerAuth0Id);
   }
 
   @MessagePattern(CHARACTER_MESSAGES.UPDATE)
   update(
     @Payload()
     data: {
-      auth0Id: string;
+      ownerAuth0Id: string;
       characterId: string;
       dto: UpdateCharacterDto;
     },
   ) {
     return this.charactersService.update(
-      data.auth0Id,
+      data.ownerAuth0Id,
       data.characterId,
       data.dto,
     );
@@ -57,48 +71,40 @@ export class CharactersController {
   updateVisibility(
     @Payload()
     data: {
-      auth0Id: string;
+      ownerAuth0Id: string;
       characterId: string;
       dto: UpdateCharacterVisibilityDto;
     },
   ) {
     return this.charactersService.updateVisibility(
-      data.auth0Id,
+      data.ownerAuth0Id,
       data.characterId,
       data.dto,
     );
   }
 
   @MessagePattern(CHARACTER_MESSAGES.IMAGES_UPLOAD)
-  uploadImage(
-    @Payload() data: { auth0Id: string; characterId: string; file: any },
-  ) {
+  uploadImage(@Payload() data: UploadCharacterImageDto) {
+    console.log('--- Received IMAGES_UPLOAD request ---', data);
     return this.charactersService.uploadImage(
-      data.auth0Id,
+      data.ownerAuth0Id,
       data.characterId,
       data.file,
     );
   }
 
   @MessagePattern(CHARACTER_MESSAGES.IMAGES_DELETE)
-  deleteImage(
-    @Payload()
-    data: {
-      auth0Id: string;
-      characterId: string;
-      imageId: string;
-    },
-  ) {
+  deleteImage(@Payload() data: DeleteCharacterImageDto) {
     return this.charactersService.deleteImage(
-      data.auth0Id,
+      data.ownerAuth0Id,
       data.characterId,
       data.imageId,
     );
   }
 
   @MessagePattern(CHARACTER_MESSAGES.IMAGES_GET)
-  getImages(@Payload() data: { auth0Id: string; characterId: string }) {
-    return this.charactersService.getImages(data.auth0Id, data.characterId);
+  getImages(@Payload() data: GetCharacterImagesDto) {
+    return this.charactersService.getImages(data.ownerAuth0Id, data.id);
   }
 
   @MessagePattern(CHARACTER_MESSAGES.IMAGES_DOWNLOAD)

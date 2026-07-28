@@ -76,8 +76,8 @@ export class CharactersService {
   }
 
   async getOne(
-    auth0Id: string,
     characterId: string,
+    auth0Id?: string,
   ): Promise<CharacterResponseDto> {
     const character = await this.charactersRepository.findById(characterId);
     if (!character) {
