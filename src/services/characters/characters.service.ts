@@ -4,12 +4,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { CharactersRepository } from '../../db/repositories/characters.repository';
 import { UsersService } from '../users/users.service';
 import { GoogleDriveService } from './google-drive.service';
-import {
+import type {
+  CharacterImageResponseDto,
+  CharacterResponseDto,
   CreateCharacterDto,
+  SerializedFileDto,
   UpdateCharacterDto,
   UpdateCharacterVisibilityDto,
-  CharacterResponseDto,
-  CharacterImageResponseDto,
 } from '@inkmesh/contracts';
 
 @Injectable()
@@ -37,7 +38,7 @@ export class CharactersService {
       throw new RpcException({ status: 404, message: 'User member not found' });
     }
 
-    const character = await this.charactersRepository.createWithMember(
+    return await this.charactersRepository.createWithMember(
       {
         name: dto.name,
         description: dto.description,
@@ -45,13 +46,10 @@ export class CharactersService {
       },
       member.id,
     );
-
-    return character as CharacterResponseDto;
   }
 
   async getMe(auth0Id: string): Promise<CharacterResponseDto[]> {
-    const characters = await this.charactersRepository.findByOwner(auth0Id);
-    return characters as CharacterResponseDto[];
+    return await this.charactersRepository.findByOwner(auth0Id);
   }
 
   async getAvailableForProject(
@@ -66,33 +64,43 @@ export class CharactersService {
       });
     }
 
-    const characters = await this.charactersRepository.getAvailableForProject(
+    return await this.charactersRepository.getAvailableForProject(
       projectId,
       auth0Id,
       role,
     );
-
-    return characters as CharacterResponseDto[];
   }
 
   async getOne(
     characterId: string,
     auth0Id?: string,
   ): Promise<CharacterResponseDto> {
-    const character = await this.charactersRepository.findById(characterId);
+    const character: CharacterResponseDto | undefined =
+      await this.charactersRepository.findById(characterId);
+
     if (!character) {
       throw new RpcException({ status: 404, message: 'Character not found' });
     }
 
-    return character as CharacterResponseDto;
+    // TODO: Switch to checking the "allowed" list
+    if (character.ownerAuth0Id !== auth0Id) {
+      throw new RpcException({
+        status: 403,
+        message: 'Only authorized users can view this character',
+      });
+    }
+
+    return character;
   }
 
   async update(
     auth0Id: string,
     characterId: string,
     dto: UpdateCharacterDto,
-  ): Promise<CharacterResponseDto> {
-    const character = await this.charactersRepository.findById(characterId);
+  ): Promise<CharacterResponseDto | undefined> {
+    const character: CharacterResponseDto | undefined =
+      await this.charactersRepository.findById(characterId);
+
     if (!character) {
       throw new RpcException({ status: 404, message: 'Character not found' });
     }
@@ -104,23 +112,37 @@ export class CharactersService {
       });
     }
 
-    const updated = await this.charactersRepository.update(characterId, dto);
-    return updated as CharacterResponseDto;
+    return await this.charactersRepository.update(characterId, dto);
   }
 
   async updateVisibility(
     auth0Id: string,
     characterId: string,
     dto: UpdateCharacterVisibilityDto,
-  ): Promise<CharacterResponseDto> {
-    const character = await this.charactersRepository.findById(characterId);
-    return character as CharacterResponseDto;
+  ): Promise<CharacterResponseDto | undefined> {
+    const character: CharacterResponseDto | undefined =
+      await this.charactersRepository.findById(characterId);
+
+    if (!character) {
+      throw new RpcException({ status: 404, message: 'Character not found' });
+    }
+
+    if (character.ownerAuth0Id !== auth0Id) {
+      throw new RpcException({
+        status: 403,
+        message: 'Only the owner can edit this character',
+      });
+    }
+
+    character.isPublic = dto.isPublic;
+
+    return await this.charactersRepository.update(characterId, character);
   }
 
   async uploadImage(
     auth0Id: string,
     characterId: string,
-    file: { buffer: Buffer; size: number; originalname: string; mimetype: string },
+    file: SerializedFileDto,
   ): Promise<CharacterImageResponseDto> {
     if (file.size > 2 * 1024 * 1024) {
       throw new RpcException({
@@ -129,7 +151,9 @@ export class CharactersService {
       });
     }
 
-    const character = await this.charactersRepository.findById(characterId);
+    const character: CharacterResponseDto | undefined =
+      await this.charactersRepository.findById(characterId);
+
     if (!character) {
       throw new RpcException({ status: 404, message: 'Character not found' });
     }
@@ -141,10 +165,7 @@ export class CharactersService {
       });
     }
 
-    // Convert the received serialized object to a real Buffer
-    const buffer = Buffer.isBuffer(file.buffer) 
-      ? file.buffer 
-      : Buffer.from((file.buffer as any).data);
+    const buffer = Buffer.from(file.buffer.data);
 
     const imageId = uuidv4();
     const gDriveFileId = await this.googleDriveService.uploadImage(
@@ -165,7 +186,9 @@ export class CharactersService {
     characterId: string,
     imageId: string,
   ): Promise<void> {
-    const character = await this.charactersRepository.findById(characterId);
+    const character: CharacterResponseDto | undefined =
+      await this.charactersRepository.findById(characterId);
+
     if (!character) {
       throw new RpcException({ status: 404, message: 'Character not found' });
     }
@@ -186,27 +209,49 @@ export class CharactersService {
     auth0Id: string,
     characterId: string,
   ): Promise<CharacterImageResponseDto[]> {
-    const character = await this.charactersRepository.findById(characterId);
+    const character: CharacterResponseDto | undefined =
+      await this.charactersRepository.findById(characterId);
+
     if (!character) {
       throw new RpcException({ status: 404, message: 'Character not found' });
     }
 
+    // TODO: Switch to checking the "allowed" list
+    if (character.ownerAuth0Id !== auth0Id) {
+      throw new RpcException({
+        status: 403,
+        message: 'Only authorized users can view images of this character',
+      });
+    }
+
     const images = await this.googleDriveService.listImages(characterId);
 
-    return images.map(img => ({
+    return images.map((img) => ({
       id: img.id,
       url: `gdrive://${img.id}`,
     }));
   }
 
-  async downloadImage(auth0Id: string, characterId: string, imageId: string): Promise<Buffer> {
-    const character = await this.charactersRepository.findById(characterId);
+  async downloadImage(
+    auth0Id: string,
+    characterId: string,
+    imageId: string,
+  ): Promise<Buffer> {
+    const character: CharacterResponseDto | undefined =
+      await this.charactersRepository.findById(characterId);
+
     if (!character) {
       throw new RpcException({ status: 404, message: 'Character not found' });
     }
 
-    // Optional: add authorization check here to ensure the user can view the character/image
-    
+    // TODO: Switch to checking the "allowed" list
+    if (character.ownerAuth0Id !== auth0Id) {
+      throw new RpcException({
+        status: 403,
+        message: 'Only the authorized users can download images',
+      });
+    }
+
     return await this.googleDriveService.downloadImage(imageId);
   }
 }

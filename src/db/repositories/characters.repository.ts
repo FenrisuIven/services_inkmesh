@@ -11,6 +11,7 @@ import {
   memberTable,
 } from '../schema';
 import { BaseRepository } from './base.repository';
+import type { CharacterResponseDto } from '@inkmesh/contracts';
 
 @Injectable()
 export class CharactersRepository extends BaseRepository<
@@ -24,7 +25,7 @@ export class CharactersRepository extends BaseRepository<
     projectId: string,
     auth0Id: string,
     role: string,
-  ) {
+  ): Promise<CharacterResponseDto[]> {
     const isCharacterLinked = this.db
       .select()
       .from(projectToCharacterTable)
@@ -70,7 +71,7 @@ export class CharactersRepository extends BaseRepository<
     );
   }
 
-  async findByOwner(auth0Id: string) {
+  async findByOwner(auth0Id: string): Promise<CharacterResponseDto[]> {
     return this.db
       .select()
       .from(this.table)
@@ -88,7 +89,7 @@ export class CharactersRepository extends BaseRepository<
   async createWithMember(
     data: typeof characterTable.$inferInsert,
     memberId: string,
-  ) {
+  ): Promise<CharacterResponseDto> {
     return await this.db.transaction(async (tx) => {
       const character = await tx.insert(this.table).values(data).returning();
 
