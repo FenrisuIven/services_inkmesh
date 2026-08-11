@@ -1,13 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { UsersRepository } from '../../db/repositories/users.repository';
+import type {
+  CreateMemberDto,
+  MemberDto,
+  ProjectMemberDto,
+} from '@inkmesh/contracts';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
-  async createMember(data: { username: string; auth0Id: string }) {
-    const existing = await this.usersRepository.findByAuth0Id(data.auth0Id);
+  async createMember(data: CreateMemberDto): Promise<MemberDto> {
+    const existing = await this.usersRepository.findByAuth0Id(data.auth0_id);
     if (existing) {
       throw new RpcException(
         'Member already exists. Please use the update method instead of create.',
@@ -15,34 +20,34 @@ export class UsersService {
     }
     return this.usersRepository.create({
       username: data.username,
-      auth0_id: data.auth0Id,
+      auth0_id: data.auth0_id,
     });
   }
 
-  async findByAuth0Id(auth0Id: string) {
+  async findByAuth0Id(auth0Id: string): Promise<MemberDto> {
     return this.usersRepository.findByAuth0Id(auth0Id);
   }
 
-  async checkProjectRole(payload: { auth0_id: string; project_id: string }) {
-    return this.usersRepository.isProjectMember(
-      payload.auth0_id,
-      payload.project_id,
-    );
+  async checkProjectRole(auth0Id: string, projectId: string): Promise<boolean> {
+    return this.usersRepository.isProjectMember(auth0Id, projectId);
   }
 
-  async getProjectRole(auth0Id: string, projectId: string) {
+  async getProjectRole(auth0Id: string, projectId: string): Promise<string> {
     return this.usersRepository.getProjectRole(auth0Id, projectId);
   }
 
-  async findById(id: string) {
+  async findById(id: string): Promise<MemberDto | undefined> {
     return this.usersRepository.findById(id);
   }
 
-  async updateMember(id: string, data: { username?: string }) {
+  async updateMember(
+    id: string,
+    data: { username?: string },
+  ): Promise<MemberDto | undefined> {
     return this.usersRepository.update(id, data);
   }
 
-  async deleteMember(id: string) {
+  async deleteMember(id: string): Promise<boolean> {
     return this.usersRepository.delete(id);
   }
 
@@ -50,23 +55,26 @@ export class UsersService {
     projectId: string,
     memberId: string,
     role: 'OWNER' | 'MODERATOR' | 'WRITER',
-  ) {
+  ): Promise<ProjectMemberDto[]> {
     return this.usersRepository.assignRole(projectId, memberId, role);
   }
 
-  async removeRole(projectId: string, memberId: string) {
+  async removeRole(
+    projectId: string,
+    memberId: string,
+  ): Promise<ProjectMemberDto[]> {
     return this.usersRepository.removeRole(projectId, memberId);
   }
 
-  async getProjectMembers(projectId: string) {
+  async getProjectMembers(projectId: string): Promise<MemberDto[]> {
     return this.usersRepository.getProjectMembers(projectId);
   }
 
-  async findAllUsers() {
+  async findAllUsers(): Promise<MemberDto[]> {
     return this.usersRepository.findAllUsers();
   }
 
-  async findAll() {
+  async findAll(): Promise<MemberDto[]> {
     return this.usersRepository.findAll();
   }
 }

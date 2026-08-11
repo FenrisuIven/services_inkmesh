@@ -1,65 +1,71 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { UsersService } from './users.service';
-
-export interface CreateMemberDto {
-  username: string;
-  auth0Id: string;
-}
-
-export interface UpdateMemberDto {
-  username?: string;
-}
-
-export interface AssignRoleDto {
-  projectId: string;
-  memberId: string;
-  role: 'OWNER' | 'MODERATOR' | 'WRITER';
-}
+import type {
+  CreateMemberPayload,
+  FindMemberByAuth0IdPayload,
+  GetMemberPayload,
+  MemberDto,
+  ProjectMemberDto,
+  UpdateMemberPayload,
+  AssignRolePayload,
+  RemoveRolePayload,
+  GetProjectMembersPayload,
+  CheckProjectRolePayload,
+} from '@inkmesh/contracts';
+import { MEMBER_MESSAGES } from '@inkmesh/contracts';
 
 @Controller()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @MessagePattern({ cmd: 'create-member' })
-  async createMember(@Payload() data: CreateMemberDto) {
-    return this.usersService.createMember(data);
+  @MessagePattern(MEMBER_MESSAGES.CREATE_MEMBER)
+  async createMember(
+    @Payload() payload: CreateMemberPayload,
+  ): Promise<MemberDto> {
+    return this.usersService.createMember(payload.data);
   }
 
-  @MessagePattern({ cmd: 'find-by-auth0-id' })
-  async findByAuth0Id(@Payload() auth0Id: string) {
-    return this.usersService.findByAuth0Id(auth0Id);
+  @MessagePattern(MEMBER_MESSAGES.FIND_BY_AUTH0_ID)
+  async findByAuth0Id(
+    @Payload() payload: FindMemberByAuth0IdPayload,
+  ): Promise<MemberDto> {
+    return this.usersService.findByAuth0Id(payload.auth0Id);
   }
 
-  @MessagePattern({ cmd: 'get-all-users' })
-  async getAllUsers() {
+  @MessagePattern(MEMBER_MESSAGES.GET_ALL)
+  async getAllUsers(): Promise<MemberDto[]> {
     return this.usersService.findAllUsers();
   }
 
-  @MessagePattern({ cmd: 'get-members' })
-  async getMembers() {
+  @MessagePattern(MEMBER_MESSAGES.GET_MEMBERS)
+  async getMembers(): Promise<MemberDto[]> {
     return this.usersService.findAll();
   }
 
-  @MessagePattern({ cmd: 'get-member' })
-  async getMember(@Payload() id: string) {
-    return this.usersService.findById(id);
+  @MessagePattern(MEMBER_MESSAGES.GET_MEMBER)
+  async getMember(
+    @Payload() payload: GetMemberPayload,
+  ): Promise<MemberDto | undefined> {
+    return this.usersService.findById(payload.id);
   }
 
-  @MessagePattern({ cmd: 'update-member' })
+  @MessagePattern(MEMBER_MESSAGES.UPDATE_MEMBER)
   async updateMember(
-    @Payload() payload: { id: string; data: UpdateMemberDto },
-  ) {
+    @Payload() payload: UpdateMemberPayload,
+  ): Promise<MemberDto | undefined> {
     return this.usersService.updateMember(payload.id, payload.data);
   }
 
-  @MessagePattern({ cmd: 'delete-member' })
-  async deleteMember(@Payload() id: string) {
+  @MessagePattern(MEMBER_MESSAGES.DELETE_MEMBER)
+  async deleteMember(@Payload() id: string): Promise<boolean> {
     return this.usersService.deleteMember(id);
   }
 
-  @MessagePattern({ cmd: 'assign-role' })
-  async assignRole(@Payload() payload: AssignRoleDto) {
+  @MessagePattern(MEMBER_MESSAGES.ASSIGN_ROLE)
+  async assignRole(
+    @Payload() payload: AssignRolePayload,
+  ): Promise<ProjectMemberDto[]> {
     return this.usersService.assignRole(
       payload.projectId,
       payload.memberId,
@@ -67,26 +73,27 @@ export class UsersController {
     );
   }
 
-  @MessagePattern({ cmd: 'remove-role' })
+  @MessagePattern(MEMBER_MESSAGES.REMOVE_ROLE)
   async removeRole(
-    @Payload() payload: { projectId: string; memberId: string },
-  ) {
+    @Payload() payload: RemoveRolePayload,
+  ): Promise<ProjectMemberDto[]> {
     return this.usersService.removeRole(payload.projectId, payload.memberId);
   }
 
-  @MessagePattern({ cmd: 'get-project-members' })
-  async getProjectMembers(@Payload() projectId: string) {
-    return this.usersService.getProjectMembers(projectId);
+  @MessagePattern(MEMBER_MESSAGES.GET_PROJECT_MEMBERS)
+  async getProjectMembers(
+    @Payload() payload: GetProjectMembersPayload,
+  ): Promise<MemberDto[]> {
+    return this.usersService.getProjectMembers(payload.projectId);
   }
 
-  @MessagePattern({ cmd: 'check-project-role' })
+  @MessagePattern(MEMBER_MESSAGES.CHECK_PROJECT_ROLE)
   async checkProjectRole(
-    @Payload() payload: { auth0_id: string; project_id: string },
-  ) {
-    console.log(
-      `[Users Controller] Received check-project-role request:`,
-      payload,
+    @Payload() payload: CheckProjectRolePayload,
+  ): Promise<boolean> {
+    return this.usersService.checkProjectRole(
+      payload.auth0_id,
+      payload.project_id,
     );
-    return this.usersService.checkProjectRole(payload);
   }
 }

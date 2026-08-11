@@ -6,6 +6,7 @@ import { DRIZZLE_CLIENT } from '../drizzle/drizzle.provider';
 
 import { projectToMemberTable, memberTable } from '../schema';
 import { BaseRepository } from './base.repository';
+import { MemberDto, ProjectMemberDto } from '@inkmesh/contracts';
 
 @Injectable()
 export class UsersRepository extends BaseRepository<typeof memberTable> {
@@ -13,17 +14,18 @@ export class UsersRepository extends BaseRepository<typeof memberTable> {
     super(db, memberTable);
   }
 
-  async findAllUsers() {
+  async findAllUsers(): Promise<MemberDto[]> {
     return this.db
       .select({
         id: memberTable.id,
         username: memberTable.username,
+        auth0_id: memberTable.auth0_id,
       })
       .from(memberTable);
   }
 
-  async findByAuth0Id(auth0Id: string) {
-    const results = await this.db
+  async findByAuth0Id(auth0Id: string): Promise<MemberDto> {
+    const results: MemberDto[] = await this.db
       .select()
       .from(this.table)
       .where(eq(this.table.auth0_id, auth0Id));
@@ -49,33 +51,31 @@ export class UsersRepository extends BaseRepository<typeof memberTable> {
     return result.length > 0;
   }
 
-  async getProjectRole(
-    auth0Id: string,
-    projectId: string,
-  ): Promise<string | undefined> {
-    const result = await this.db
-      .select({ role: projectToMemberTable.role })
-      .from(memberTable)
-      .innerJoin(
-        projectToMemberTable,
-        eq(memberTable.id, projectToMemberTable.memberId),
-      )
-      .where(
-        and(
-          eq(memberTable.auth0_id, auth0Id),
-          eq(projectToMemberTable.projectId, projectId),
-        ),
-      )
-      .limit(1);
+  async getProjectRole(auth0Id: string, projectId: string): Promise<string> {
+    const result: { role: 'MODERATOR' | 'OWNER' | 'WRITER' | null }[] =
+      await this.db
+        .select({ role: projectToMemberTable.role })
+        .from(memberTable)
+        .innerJoin(
+          projectToMemberTable,
+          eq(memberTable.id, projectToMemberTable.memberId),
+        )
+        .where(
+          and(
+            eq(memberTable.auth0_id, auth0Id),
+            eq(projectToMemberTable.projectId, projectId),
+          ),
+        )
+        .limit(1);
 
-    return (result[0]?.role as string) || undefined;
+    return result[0]?.role || '';
   }
 
   async assignRole(
     projectId: string,
     memberId: string,
     role: 'OWNER' | 'MODERATOR' | 'WRITER',
-  ) {
+  ): Promise<ProjectMemberDto[]> {
     return this.db
       .insert(projectToMemberTable)
       .values({
@@ -90,7 +90,10 @@ export class UsersRepository extends BaseRepository<typeof memberTable> {
       .returning();
   }
 
-  async removeRole(projectId: string, memberId: string) {
+  async removeRole(
+    projectId: string,
+    memberId: string,
+  ): Promise<ProjectMemberDto[]> {
     return this.db
       .delete(projectToMemberTable)
       .where(
@@ -102,12 +105,14 @@ export class UsersRepository extends BaseRepository<typeof memberTable> {
       .returning();
   }
 
-  async getProjectMembers(projectId: string) {
+  async getProjectMembers(projectId: string): Promise<MemberDto[]> {
     return this.db
       .select({
         memberId: projectToMemberTable.memberId,
         role: projectToMemberTable.role,
         username: memberTable.username,
+        auth0_id: memberTable.auth0_id,
+        id: memberTable.id,
       })
       .from(projectToMemberTable)
       .innerJoin(memberTable, eq(projectToMemberTable.memberId, memberTable.id))
